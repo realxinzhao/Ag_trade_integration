@@ -1,4 +1,5 @@
 library(dplyr)
+library(tidyr)
 library(gcamdata)
 source("R/funcs.R")
 
@@ -8,9 +9,9 @@ integrate.sw.rate = 1.08; outxml_name = "ag_trade_sw_default.xml" # default
 integrate.sw.rate = 1.22; outxml_name = "ag_trade_sw_high.xml" # high 
 
 
-INPUT_DIR <- "input/"
-OUTPUT_DIR <- "output/"
-AG_TRADE_DIR <- "input/agtrade_gcamoutput/"
+INPUT_DIR <- "input/Zhao2021EAP/"
+OUTPUT_DIR <- "output/Zhao2021EAP/"
+AG_TRADE_DIR <- "input/Zhao2021EAP/agtrade_gcamoutput/"
 
 MODEL_BASE_YEARS        <- c(1975, 1990, 2005, 2010, 2015)
 MODEL_FUTURE_YEARS      <- seq(2020, 2100, 5)
@@ -55,7 +56,7 @@ Price_trade_reg%>%
          sw_GCAM = sw^(-logit.exponent)) %>% 
   ungroup()-> data.sw0
 
-#share weight converts only for crops
+#share-weight converges only for crops
 data.sw0 %>% within(rm(year)) %>% 
   as_tibble() %>% 
   repeat_add_columns(tibble(year = c(2015, MODEL_FUTURE_YEARS))) %>% 

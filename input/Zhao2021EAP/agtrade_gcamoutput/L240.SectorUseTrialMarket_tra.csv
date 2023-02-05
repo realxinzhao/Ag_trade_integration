@@ -1,0 +1,17 @@
+# This helps model solution when running with ag trade
+region,supplysector,use.trial.market
+USA,traded corn,1
+USA,traded fibercrop,1
+USA,traded misccrop,1
+USA,traded oilcrop,1
+USA,traded othergrain,1
+USA,traded palmfruit,1
+USA,traded rice,1
+USA,traded root_tuber,1
+USA,traded sugarcrop,1
+USA,traded wheat,1
+USA,traded beef,1
+USA,traded dairy,1
+USA,traded pork,1
+USA,traded poultry,1
+USA,traded sheepgoat,1
