@@ -14,7 +14,9 @@
 
 
 library(dplyr)
+library(tidyr)
 library(gcamdata)
+library(ggplot2)
 source("R/funcs.R")
 
 
@@ -149,7 +151,7 @@ data.sw0 %>%
   mutate(sw_GCAM = sw^(-logit.exponent)) %>% 
   ungroup()-> data.sw
 
-library(ggplot2)
+
 ## convergence plot ----
 data.sw %>% filter(sw_GCAM >0, sw_GCAM <5) %>% 
   ggplot() + facet_wrap(~region) +
@@ -201,6 +203,74 @@ ag_trade.xml %>% gcamdata::run_xml_conversion()
 
 
 ## Done ----
+
+
+#*********************************----
+# Palm SUA data ----
+
+readRDS(file.path(INPUT_DIR, "/PalmDataSUA.rds")) -> PalmDataSUA
+
+
+PalmDataSUA %>% #distinct(element)
+  mutate(value = value / 1000) %>%
+  filter(value !=0,
+         !element %in% c("Regional demand", "Regional supply", "Closing stocks", "Opening stocks")) %>%
+  mutate(value = if_else(element %in% c("Production", "Import"), -value, value)) %>%
+  mutate(element = replace(element,
+                           element %in% c("Stock Variation", "Loss", "Residuals", "Seed"), "SeedLossStockResidual")) %>%
+  group_by(area, year, item, element) %>%
+  summarise(value = sum(value), .groups = "drop") %>%
+  mutate(element = factor(element, levels = c("Production", "Import",
+                                              "Export", "Food", "Feed", "Processed",
+                                              "SeedLossStockResidual", "Other uses"))) %>%
+  mutate(year = as.character(year)) ->
+  PalmData
+
+PalmData %>% distinct(item) %>% pull -> PalmItems
+
+PalmData %>%
+  filter(item %in% "Oil palm fruit", element %in% c("Production"), year == 2015) %>%
+  distinct(area) -> RegProd
+
+PalmData %>%
+  filter(item %in% "Oil, palm", element %in% c("Export", "Import"), year == 2015) %>%
+  spread(element, value, fill = 0) %>% filter(Export + Import > 0) %>%
+  distinct(area) -> RegNetExp
+
+
+PalmData %>%
+  right_join(RegNetExp, by = "area") %>%
+  group_by(area, item) %>%
+  summarise(xmin="2010",xmax="2019",ymin=min(value),ymax=max(value)) ->
+  PalmDataRange
+
+PalmData %>%
+  right_join(RegProd, by = "area") %>%
+  group_by(area, item) %>%
+  summarise(xmin="2010",xmax="2019",ymin=min(value),ymax=max(value)) ->
+  PalmDataRange1
+
+for (n in 1:length(PalmItems)) {
+  PalmData %>% 
+    filter(item %in% PalmItems[n]) %>%
+    ggplot() + facet_wrap(~area, scales = "free_y") +
+    geom_hline(yintercept = 0) +
+    geom_rect(data=PalmDataRange %>% filter(item %in% PalmItems[n]),
+              inherit.aes=FALSE,
+              aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha = 0.1, fill = "blue" ) +
+    geom_rect(data=PalmDataRange1 %>% filter(item %in% PalmItems[n]),
+              inherit.aes=FALSE,
+              aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha = 0.1, fill = "orange" ) +
+    geom_line(aes(x = year, y = value, group = element,
+                  color = element)) +
+    labs(x= "Year", y = "Mt", color = "SUA element",
+         title = paste0("FAO supply utilization accounting: ", PalmItems[n])) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) -> p
+  
+  
+  ggsave(file.path(OUTPUT_DIR, paste0("SUA_", PalmItems[n], ".png")), p, width = 15, height = 10 )
+}
 
 
 
