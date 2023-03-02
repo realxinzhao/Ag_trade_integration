@@ -178,16 +178,20 @@ L240.TechShrwt_tra %>%
       select(-sw_GCAM)
   ) -> L240.TechShrwt_tra_Updated
 
+L240.TechShrwt_tra_Updated %>% 
+  filter(year >= 2020) %>% 
+  mutate(`year.fillout` = year) -> 
+  L240.TechShrwt_tra_Updated1
 
 
 
 gcamdata::create_xml(file.path(OUTPUT_DIR, outxml_name)) %>%
   add_logit_tables_xml(L240.Supplysector_tra, "Supplysector") %>%
   add_xml_data(L240.SectorUseTrialMarket_tra, "SectorUseTrialMarket") %>%
-  add_logit_tables_xml(L240.SubsectorAll_tra, 
-                       "SubsectorLogit",  #header changed here 
+  add_logit_tables_xml(L240.SubsectorAll_tra, "SubsectorLogit",  #header changed here 
                        base_logit_header = "SubsectorLogit") %>%
-  add_xml_data(L240.TechShrwt_tra_Updated, "TechShrwt") %>%
+  add_xml_data(L240.TechShrwt_tra, "TechShrwt") %>% # SW changes here will not work
+  add_xml_data(L240.TechShrwt_tra_Updated1, "SubsectorShrwtFllt") %>% # So added share weight
   add_xml_data(L240.TechCost_tra, "TechCost") %>%
   add_xml_data(L240.TechCoef_tra, "TechCoef") %>%
   add_xml_data(L240.Production_tra, "Production") %>%
